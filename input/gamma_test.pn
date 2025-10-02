@@ -1,0 +1,54 @@
+# Structure of Petri Net files:
+# @Places
+# [List of places]
+# @Transitions
+# [List of transitions]
+# @TerminationTime | @TerminationMarking
+# Time | [List of final marking: Place number;Final tokens]
+
+# List of places with initial marking
+# (i.e. number of tokens):
+# Number of tokens[;Name]
+# Comments can be inserted between lines
+# (e.g. to name places) using '#'
+
+@Places
+# P1: Number of samples
+10000;Samples
+# P2: Trigger
+0;Trigger
+# P3: Final
+0;Final
+
+# List of transitions, consisting of:
+# Places in;Places out;Weights in;Weights out[;Probability distribution]
+# Lists should be separated by semicolon.
+# Accepted distributions are:
+# - Constant: CON(VALUE)
+# - Uniform: UNI() or UNI(LB,UB)
+# - Exponential: EXP(MEAN)
+# - Normal: NOR() or NOR(MEAN,SD)
+# - Triangular: TRI(LB,MODE,UB)
+# - Lognormal: LOG(MEAN,SD)
+# - Bounded exponential: BEXP(LB,MEAN)
+# - Gamma: GAM(SHAPE,SCALE,THRESHOLD)
+# Comments can be inserted between lines 
+# (e.g. to name transitions) using '#'
+
+@Transitions
+# T1
+1;2;1;1
+# T2
+2;3;1;1;GAM(7.5,1,0)
+
+# Termination criterion based on simulation time and/or final marking: 
+# [@TerminationTime] 
+# [Time] 
+# [@TerminationMarking]
+# [List final marking conditions: Place number;Final tokens]
+# Comments can be inserted between lines 
+# (e.g. to describe final marking) using '#'
+
+@TerminationMarking
+# All samples produced
+3;10000

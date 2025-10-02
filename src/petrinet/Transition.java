@@ -10,9 +10,9 @@ public class Transition {
 	
 	private boolean timed;
 	private int distribution;
-	private double param1;	// LB for uniform distributions, LB for triangular, LB for bounded exponential, RATE (lambda) for exponential, MEAN for normal and lognormal.
-	private double param2;	// UB for uniform distributions, UB for triangular, SD for normal and lognormal, MEAN (1/lambda) for bounded exponential.
-	private double param3;	// MODE for triangular
+	private double param1;	// LB for uniform distributions, LB for triangular, LB for bounded exponential, RATE (lambda) for exponential, MEAN for normal and lognormal, SHAPE for gamma.
+	private double param2;	// UB for uniform distributions, UB for triangular, SD for normal and lognormal, MEAN (1/lambda) for bounded exponential, SCALE for gamma.
+	private double param3;	// MODE for triangular, THRESHOLD for gamma.
 	private Distributions distributions;
 	
 	private int firings;
@@ -72,7 +72,7 @@ public class Transition {
 		this.distributions = new Distributions();
 		
 		String[] distrString = distribution.split("\\(");
-		// 0: constant, 1: uniform, 2: exponential, 3: normal, 4: triangular, 5: lognormal, 6: bounded exponential
+		// 0: constant, 1: uniform, 2: exponential, 3: normal, 4: triangular, 5: lognormal, 6: bounded exponential, 7: gamma
 		switch(distrString[0].trim()) {
 		case "CON": case "con":
 			this.distribution = 0;
@@ -135,6 +135,13 @@ public class Transition {
 			this.param1 = Double.valueOf(cleanParamsBoundExp[0]).doubleValue();
 			this.param2 = Double.valueOf(cleanParamsBoundExp[1]).doubleValue();
 			this.param3 = 0; 
+			break;
+		case "GAM": case "gam":
+			this.distribution = 7;
+			String[] cleanParamsBoundGam = distrString[1].trim().substring(0, distrString[1].trim().length() - 1).split(",");
+			this.param1 = Double.valueOf(cleanParamsBoundGam[0]).doubleValue();
+			this.param2 = Double.valueOf(cleanParamsBoundGam[1]).doubleValue();
+			this.param3 = Double.valueOf(cleanParamsBoundGam[2]).doubleValue(); 
 			break;
 		default:
 			this.distribution = 0;
@@ -233,6 +240,8 @@ public class Transition {
 			return distributions.nextLogNormal(param1, param2);
 		case 6:
 			return distributions.nextBoundedExp(param1, param2);
+		case 7:
+			return distributions.nextGamma(param1, param2, param3);
 		default:
 			return 0;
 		}
