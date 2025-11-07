@@ -1,4 +1,6 @@
-package petrinet;
+package com.petrinet.cli;
+
+import com.petrinet.engine.SimulationEngine;
 
 public class Simulate {
 

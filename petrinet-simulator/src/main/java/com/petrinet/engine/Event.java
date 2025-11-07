@@ -1,4 +1,4 @@
-package petrinet;
+package com.petrinet.engine;
 
 public class Event implements Comparable<Event> {
 	

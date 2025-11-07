@@ -1,4 +1,6 @@
-package petrinet;
+package com.petrinet.model;
+
+import com.petrinet.distributions.Distributions;
 
 public class Transition {
 	private static int nTransitions = 1;

@@ -1,4 +1,7 @@
-package petrinet;
+package com.petrinet.engine;
+
+import com.petrinet.model.PetriNet;
+import com.petrinet.io.*;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;

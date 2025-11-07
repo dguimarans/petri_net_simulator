@@ -1,4 +1,4 @@
-package petrinet;
+package com.petrinet.model;
 
 public class Place {
 	private static int nPlaces = 1;

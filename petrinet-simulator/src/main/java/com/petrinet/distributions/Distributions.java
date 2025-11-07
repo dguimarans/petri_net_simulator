@@ -1,4 +1,4 @@
-package petrinet;
+package com.petrinet.distributions;
 
 import java.util.Random;
 

@@ -1,9 +1,11 @@
-package petrinet;
+package com.petrinet.io;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+
+import com.petrinet.model.PetriNet;
 
 public class Output {
 	
