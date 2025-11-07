@@ -1,4 +1,39 @@
-*.class
-*.code-workspace
-*.csv
+# Maven build directory
 target/
+
+# Logs
+*.log
+
+# Maven Shade plugin
+dependency-reduced-pom.xml
+
+# Compiled class files
+*.class
+
+
+# IDE and OS files
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# NetBeans
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# OS files
+.DS_Store
+Thumbs.db
