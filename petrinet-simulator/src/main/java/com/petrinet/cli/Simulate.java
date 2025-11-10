@@ -1,14 +1,14 @@
 package com.petrinet.cli;
 
 import com.petrinet.engine.SimulationEngine;
+import com.petrinet.io.PetriNetException;
 
 public class Simulate {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws PetriNetException {
 
 		if(args.length < 2) {
-			System.out.println("Syntax: java petrinet.Simulate inputFileName outputFileName [simulationRuns] [-verbose]");
-			System.exit(0);
+			throw new PetriNetException("Syntax: java petrinet.Simulate inputFileName outputFileName [simulationRuns] [-verbose]");
 		}
 		
 		int simulationRuns = 1;

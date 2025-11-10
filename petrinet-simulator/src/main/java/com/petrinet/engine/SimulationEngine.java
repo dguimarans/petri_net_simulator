@@ -27,7 +27,7 @@ public class SimulationEngine {
 	private double terminationTime;
 	private ArrayList<int[]> terminationMarking;
 
-	public SimulationEngine(String petrinetFile, String outputFile, boolean verbose) {
+	public SimulationEngine(String petrinetFile, String outputFile, boolean verbose) throws PetriNetException {
 		this.time = 0.0;
 		this.pn = new PetriNet(petrinetFile);
 		this.listEvents = new LinkedList<Event>();
@@ -118,7 +118,7 @@ public class SimulationEngine {
 		return this.verbose;
 	}
 
-	private void readTerminationCriteria(String petrinetFile) {
+	private void readTerminationCriteria(String petrinetFile) throws PetriNetException {
 		try {
 			FileReader fr = new FileReader(petrinetFile);
 			BufferedReader br = new BufferedReader(fr);
@@ -161,15 +161,12 @@ public class SimulationEngine {
 			fr.close();
 
 		} catch (FileNotFoundException fnf) {
-			System.err.println("Petri Net file not found.");
-			System.exit(0);
+			throw new PetriNetFileNotFoundException("Petri Net file not found.");
 		} catch (IOException ioe) {
-			System.err.println("Simulation Engine: Can't read the specified file.");
-			System.exit(0);
+			throw new PetriNetParseException("Simulation Engine: Can't read the specified file.");
 		} catch (NullPointerException npe) {
-			System.err.println(
+			throw new PetriNetSimulationException(
 					"Simulation Engine: Unbounded simulation detected. No termination criteria specified or bad format.");
-			System.exit(0);
 		}
 	}
 

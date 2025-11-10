@@ -10,6 +10,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.petrinet.io.PetriNetException;
+import com.petrinet.io.PetriNetFileNotFoundException;
+import com.petrinet.io.PetriNetParseException;
+import com.petrinet.io.PetriNetSimulationException;
+
 public class PetriNet {
 
 	private HashMap<Integer, Place> places;
@@ -43,7 +48,7 @@ public class PetriNet {
 		setTransitionsFromFile(fileName);
 	}
 
-	public PetriNet(String fileName) {
+	public PetriNet(String fileName) throws PetriNetException {
 		this.places = new HashMap<Integer, Place>();
 		this.transitions = new HashMap<Integer, Transition>();
 		this.outputTransitions = new HashMap<Integer, ArrayList<Integer>>();
@@ -55,7 +60,7 @@ public class PetriNet {
 			places.put(i + 1, new Place(initialStatus[i]));
 	}
 
-	private void readPetriNetFile(String fileName) {
+	private void readPetriNetFile(String fileName) throws PetriNetException {
 		try {
 			FileReader fr = new FileReader(fileName);
 			BufferedReader br = new BufferedReader(fr);
@@ -87,14 +92,11 @@ public class PetriNet {
 			fr.close();
 
 		} catch (FileNotFoundException fnf) {
-			System.err.println("Petri Net file not found.");
-			System.exit(0);
+			throw new PetriNetFileNotFoundException("Petri Net file not found.");
 		} catch (IOException ioe) {
-			System.err.println("Petri Net: Can't read the specified file.");
-			System.exit(0);
+			throw new PetriNetParseException("Petri Net: Can't read the specified file.");
 		} catch (NullPointerException npe) {
-			System.err.println("Petri Net: Unbounded simulation detected.");
-			System.exit(0);
+			throw new PetriNetSimulationException("Petri Net: Unbounded simulation detected.");
 		}
 	}
 
