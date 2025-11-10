@@ -7,46 +7,46 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Hashtable;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class PetriNet {
 
-	private Hashtable<Integer, Place> places;
-	private Hashtable<Integer, Transition> transitions;
-	private Hashtable<Integer, ArrayList<Integer>> outputTransitions;
+	private HashMap<Integer, Place> places;
+	private HashMap<Integer, Transition> transitions;
+	private HashMap<Integer, ArrayList<Integer>> outputTransitions;
 
 	public PetriNet(int nPlaces, int nTransitions) {
-		this.places = new Hashtable<Integer, Place>(nPlaces);
+		this.places = new HashMap<Integer, Place>(nPlaces);
 		for (int i = 0; i < nPlaces;)
 			places.put(++i, new Place());
 
-		this.transitions = new Hashtable<Integer, Transition>(nTransitions);
+		this.transitions = new HashMap<Integer, Transition>(nTransitions);
 		for (int i = 0; i < nTransitions;)
 			transitions.put(++i, new Transition());
 
-		this.outputTransitions = new Hashtable<Integer, ArrayList<Integer>>();
+		this.outputTransitions = new HashMap<Integer, ArrayList<Integer>>();
 	}
 
 	public PetriNet(int[] initialMarking, int nTransitions) {
-		this.places = new Hashtable<Integer, Place>(initialMarking.length);
-		this.transitions = new Hashtable<Integer, Transition>(nTransitions);
-		this.outputTransitions = new Hashtable<Integer, ArrayList<Integer>>();
+		this.places = new HashMap<Integer, Place>(initialMarking.length);
+		this.transitions = new HashMap<Integer, Transition>(nTransitions);
+		this.outputTransitions = new HashMap<Integer, ArrayList<Integer>>();
 		setPlaces(initialMarking);
 	}
 
 	public PetriNet(int[] initialMarking, int nTransitions, String fileName) {
-		this.places = new Hashtable<Integer, Place>(initialMarking.length);
-		this.transitions = new Hashtable<Integer, Transition>(nTransitions);
-		this.outputTransitions = new Hashtable<Integer, ArrayList<Integer>>();
+		this.places = new HashMap<Integer, Place>(initialMarking.length);
+		this.transitions = new HashMap<Integer, Transition>(nTransitions);
+		this.outputTransitions = new HashMap<Integer, ArrayList<Integer>>();
 		setPlaces(initialMarking);
 		setTransitionsFromFile(fileName);
 	}
 
 	public PetriNet(String fileName) {
-		this.places = new Hashtable<Integer, Place>();
-		this.transitions = new Hashtable<Integer, Transition>();
-		this.outputTransitions = new Hashtable<Integer, ArrayList<Integer>>();
+		this.places = new HashMap<Integer, Place>();
+		this.transitions = new HashMap<Integer, Transition>();
+		this.outputTransitions = new HashMap<Integer, ArrayList<Integer>>();
 		readPetriNetFile(fileName);
 	}
 
@@ -121,15 +121,15 @@ public class PetriNet {
 		}
 	}
 
-	public Hashtable<Integer, Place> getPlaces() {
+	public HashMap<Integer, Place> getPlaces() {
 		return this.places;
 	}
 
-	public Hashtable<Integer, Transition> getTransitions() {
+	public HashMap<Integer, Transition> getTransitions() {
 		return this.transitions;
 	}
 
-	public Hashtable<Integer, ArrayList<Integer>> getOutputTransitions() {
+	public HashMap<Integer, ArrayList<Integer>> getOutputTransitions() {
 		return this.outputTransitions;
 	}
 
