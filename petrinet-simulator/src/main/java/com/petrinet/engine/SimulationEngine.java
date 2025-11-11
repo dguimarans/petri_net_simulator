@@ -1,6 +1,9 @@
 package com.petrinet.engine;
 
 import com.petrinet.model.PetriNet;
+
+import lombok.extern.slf4j.Slf4j;
+
 import com.petrinet.io.*;
 
 import java.io.BufferedReader;
@@ -11,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 
+@Slf4j
 public class SimulationEngine {
 
 	private double time;
@@ -75,7 +79,7 @@ public class SimulationEngine {
 				} while (i <= pn.getTransitions().size());
 
 				if (deadlock) {
-					System.out.println("Simulation reached a deadlock state.");
+					log.warn("Simulation reached a deadlock state.");
 					break;
 				}
 			}

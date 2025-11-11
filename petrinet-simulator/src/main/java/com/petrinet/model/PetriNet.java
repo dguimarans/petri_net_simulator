@@ -15,6 +15,9 @@ import com.petrinet.io.PetriNetFileNotFoundException;
 import com.petrinet.io.PetriNetParseException;
 import com.petrinet.io.PetriNetSimulationException;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class PetriNet {
 
 	private HashMap<Integer, Place> places;
@@ -40,7 +43,7 @@ public class PetriNet {
 		setPlaces(initialMarking);
 	}
 
-	public PetriNet(int[] initialMarking, int nTransitions, String fileName) {
+	public PetriNet(int[] initialMarking, int nTransitions, String fileName) throws PetriNetException {
 		this.places = new HashMap<Integer, Place>(initialMarking.length);
 		this.transitions = new HashMap<Integer, Transition>(nTransitions);
 		this.outputTransitions = new HashMap<Integer, ArrayList<Integer>>();
@@ -100,7 +103,7 @@ public class PetriNet {
 		}
 	}
 
-	private void setTransitionsFromFile(String fileName) {
+	private void setTransitionsFromFile(String fileName) throws PetriNetException {
 		try {
 			FileReader fr = new FileReader(fileName);
 			BufferedReader br = new BufferedReader(fr);
@@ -117,9 +120,9 @@ public class PetriNet {
 			fr.close();
 
 		} catch (FileNotFoundException fnf) {
-			System.err.println("Transitions file not found.");
+			throw new PetriNetFileNotFoundException("Transitions file not found.");
 		} catch (IOException ioe) {
-			System.err.println("Wrong file format.");
+			throw new PetriNetParseException("Wrong file format.");
 		}
 	}
 
@@ -159,7 +162,7 @@ public class PetriNet {
 
 	public void fireTransition(int transition, SimulationEngine simEng) {
 		if (simEng.enabledVerbose())
-			System.out.println("T" + transition + " @ " + simEng.getSimulationTime());
+			log.info("T{} @ {}", transition, simEng.getSimulationTime());
 
 		for (int i = 0; i < transitions.get(transition).getPlacesIn().length; i++)
 			places.get(transitions.get(transition).getPlacesIn()[i])
@@ -179,21 +182,19 @@ public class PetriNet {
 
 		for (int i = 0; i < placesOut.length; i++) {
 			if (simEng.enabledVerbose())
-				System.out.println(placesOut[i] + " -> " + getOutputTransitions().get(placesOut[i]));
+				log.info("{} -> {}", placesOut[i], getOutputTransitions().get(placesOut[i]));
 			if (getOutputTransitions().containsKey(placesOut[i]))
 				for (int j = 0; j < getOutputTransitions().get(placesOut[i]).size(); j++)
 					if (enabledTransition(getOutputTransitions().get(placesOut[i]).get(j))) {
 						if (simEng.enabledVerbose())
-							System.out
-									.println("Enabled transition: T" + getOutputTransitions().get(placesOut[i]).get(j));
+							log.info("Enabled transition: T{}", getOutputTransitions().get(placesOut[i]).get(j));
 						if (transitions.get(getOutputTransitions().get(placesOut[i]).get(j)).isTimed()) {
 							double nextFireTime = simEng.getSimulationTime()
 									+ transitions.get(getOutputTransitions().get(placesOut[i]).get(j)).call();
 							simEng.getListEvents()
 									.add(new Event(getOutputTransitions().get(placesOut[i]).get(j), nextFireTime));
 							if (simEng.enabledVerbose())
-								System.out.println("Adding T" + getOutputTransitions().get(placesOut[i]).get(j)
-										+ " with time: " + nextFireTime);
+								log.info("Adding T{} with time: {}", getOutputTransitions().get(placesOut[i]).get(j), nextFireTime);
 						} else {
 							fireTransition(getOutputTransitions().get(placesOut[i]).get(j), simEng);
 						}

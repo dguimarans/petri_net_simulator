@@ -3,6 +3,9 @@ package com.petrinet.cli;
 import com.petrinet.engine.SimulationEngine;
 import com.petrinet.io.PetriNetException;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class Simulate {
 
 	public static void main(String[] args) throws PetriNetException {
@@ -24,14 +27,13 @@ public class Simulate {
 			simulation.run();
 			
 			if(verbose) 
-				System.out.println("---");
-			System.out.println("Simulation " + i + " ended at time: " + simulation.getSimulationTime());
+				log.info("---");
+			log.info("Simulation {} ended at time: {}", i, simulation.getSimulationTime());
 			if(verbose) 
-				System.out.println("============");
+				log.info("============");
 		}
 		
-		System.out.println("Outputs written in " + args[1].split("\\.")[0] + "_[simulationRun].csv");
-		
+		log.info("Outputs written in {}_[simulationRun].csv", args[1].split("\\.")[0]);		
 	}
 	
 }
