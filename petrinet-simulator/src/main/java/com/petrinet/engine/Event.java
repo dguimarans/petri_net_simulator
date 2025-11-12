@@ -18,7 +18,7 @@ public class Event implements Comparable<Event> {
 		return this.time;
 	}
 
-	
+	@Override
 	public int compareTo(Event otherEvent) {
 		if (this.time < otherEvent.getTime())
 			return -1;

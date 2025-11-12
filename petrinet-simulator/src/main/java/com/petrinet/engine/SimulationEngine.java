@@ -52,7 +52,7 @@ public class SimulationEngine {
 			if (!listEvents.isEmpty()) {
 				Collections.sort(listEvents);
 				Event firingEvent = listEvents.remove(0);
-//				listEvents.remove(0);
+				// listEvents.remove(0);
 
 				time = firingEvent.getTime();
 				pn.fireTransition(firingEvent.getTransition(), this);
@@ -65,10 +65,11 @@ public class SimulationEngine {
 				do {
 					if (pn.enabledTransition(pn.getTransitions().get(i).getId())) {
 						// This first case only applies for Arrival/Source transitions
-						if (pn.getTransitions().get(i).isTimed() && !scheduledTransition(pn.getTransitions().get(i).getId())) 							
+						if (pn.getTransitions().get(i).isTimed()
+								&& !scheduledTransition(pn.getTransitions().get(i).getId()))
 							listEvents.add(new Event(pn.getTransitions().get(i).getId(),
 									time + pn.getTransitions().get(i).call()));
-						else if(!pn.getTransitions().get(i).isTimed())
+						else if (!pn.getTransitions().get(i).isTimed())
 							pn.fireTransition(pn.getTransitions().get(i).getId(), this);
 						else
 							i++;
@@ -110,10 +111,10 @@ public class SimulationEngine {
 	public Output getOutputFile() {
 		return this.outputWriter;
 	}
-	
+
 	private boolean scheduledTransition(int transition) {
-		for(int i = 0; i < listEvents.size(); i++)
-			if(listEvents.get(i).getTransition() == transition)
+		for (int i = 0; i < listEvents.size(); i++)
+			if (listEvents.get(i).getTransition() == transition)
 				return true;
 		return false;
 	}
@@ -175,12 +176,7 @@ public class SimulationEngine {
 	}
 
 	private boolean terminateSimulation() {
-		if (terminateByTime && time >= terminationTime)
-			return true;
-		else if (terminateByMarking && checkFinalMarking())
-			return true;
-		else
-			return false;
+		return (terminateByTime && time >= terminationTime) || (terminateByMarking && checkFinalMarking());
 	}
 
 	private boolean checkFinalMarking() {
@@ -190,10 +186,6 @@ public class SimulationEngine {
 				finalPlaceMarking++;
 		}
 
-		if (finalPlaceMarking == terminationMarking.size())
-			return true;
-		else
-			return false;
+		return finalPlaceMarking == terminationMarking.size();
 	}
-
 }
