@@ -1,14 +1,19 @@
 package com.petrinet.model;
 
-import com.petrinet.engine.*;
-import com.petrinet.io.Output;
-
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import com.petrinet.engine.*;
+import com.petrinet.io.Output;
+
+import static com.petrinet.io.OutputFormat.CSV_DELIMITER;
+import static com.petrinet.io.OutputFormat.CSV_NEWLINE;
+import static com.petrinet.io.PetriNetFileFormat.*;
+import static com.petrinet.model.ModelDefaultStrings.*;
 
 import com.petrinet.io.PetriNetException;
 import com.petrinet.io.PetriNetFileNotFoundException;
@@ -64,35 +69,29 @@ public class PetriNet {
 	}
 
 	private void readPetriNetFile(String fileName) throws PetriNetException {
-		try {
-			FileReader fr = new FileReader(fileName);
-			BufferedReader br = new BufferedReader(fr);
-
-			while (!br.readLine().equals("@Places"));
+		try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+			while (!br.readLine().equals(SECTION_PLACES));
 
 			int place = 1;
 			String line = br.readLine();
 			do {
-				if (!line.substring(0, 1).equals("#"))
+				if (!line.substring(0, 1).equals(COMMENT_PREFIX))
 					textToPlace(line, place++);
 				line = br.readLine();
-			} while (line.trim().length() > 0 && !line.equals("@Transitions"));
+			} while (line.trim().length() > 0 && !line.equals(SECTION_TRANSITIONS));
 
-			if (!line.equals("@Transitions"))
-				while (!br.readLine().equals("@Transitions")) {
+			if (!line.equals(SECTION_TRANSITIONS))
+				while (!br.readLine().equals(SECTION_TRANSITIONS)) {
 				}
 
 			int transition = 1;
 			line = br.readLine();
 			do {
-				if (!line.substring(0, 1).equals("#"))
+				if (!line.substring(0, 1).equals(COMMENT_PREFIX))
 					textToTransition(line, transition++);
 				line = br.readLine();
-			} while (line.trim().length() > 0 && !line.equals("@TerminationTime")
-					&& !line.equals("@TerminationMarking"));
-
-			br.close();
-			fr.close();
+			} while (line.trim().length() > 0 && !line.equals(SECTION_TERMINATION_TIME)
+					&& !line.equals(SECTION_TERMINATION_MARKING));
 
 		} catch (FileNotFoundException fnf) {
 			throw new PetriNetFileNotFoundException("Petri Net file not found.");
@@ -104,25 +103,18 @@ public class PetriNet {
 	}
 
 	private void setTransitionsFromFile(String fileName) throws PetriNetException {
-		try {
-			FileReader fr = new FileReader(fileName);
-			BufferedReader br = new BufferedReader(fr);
-
+		try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
 			String line = br.readLine();
 			int transition = 1;
 			do {
 				textToTransition(line, transition++);
-//				transition++;
 				line = br.readLine();
 			} while (line != null);
-
-			br.close();
-			fr.close();
 
 		} catch (FileNotFoundException fnf) {
 			throw new PetriNetFileNotFoundException("Transitions file not found.");
 		} catch (IOException ioe) {
-			throw new PetriNetParseException("Wrong file format.");
+			throw new PetriNetParseException("Transitions: Wrong file format.");
 		}
 	}
 
@@ -162,7 +154,7 @@ public class PetriNet {
 
 	public void fireTransition(int transition, SimulationEngine simEng) {
 		if (simEng.enabledVerbose())
-			log.info("T{} @ {}", transition, simEng.getSimulationTime());
+			log.info("{}{} @ {}", DEFAULT_TRANSITION_NAME_PREFIX, transition, simEng.getSimulationTime());
 
 		for (int i = 0; i < transitions.get(transition).getPlacesIn().length; i++)
 			places.get(transitions.get(transition).getPlacesIn()[i])
@@ -175,7 +167,7 @@ public class PetriNet {
 							+ transitions.get(transition).getWeightsOut()[i]);
 
 		simEng.getOutputFile()
-				.writeOutput("T" + transition + "," + simEng.getSimulationTime() + "," + stateToString() + "\n");
+				.writeOutput(DEFAULT_TRANSITION_NAME_PREFIX + transition + CSV_DELIMITER + simEng.getSimulationTime() + CSV_DELIMITER + stateToString() + CSV_NEWLINE);
 		transitions.get(transition).countFirings();
 
 		int[] placesOut = transitions.get(transition).getPlacesOut();
@@ -187,14 +179,14 @@ public class PetriNet {
 				for (int j = 0; j < getOutputTransitions().get(placesOut[i]).size(); j++)
 					if (enabledTransition(getOutputTransitions().get(placesOut[i]).get(j))) {
 						if (simEng.enabledVerbose())
-							log.info("Enabled transition: T{}", getOutputTransitions().get(placesOut[i]).get(j));
+							log.info("Enabled transition: {}{}", DEFAULT_TRANSITION_NAME_PREFIX, getOutputTransitions().get(placesOut[i]).get(j));
 						if (transitions.get(getOutputTransitions().get(placesOut[i]).get(j)).isTimed()) {
 							double nextFireTime = simEng.getSimulationTime()
 									+ transitions.get(getOutputTransitions().get(placesOut[i]).get(j)).call();
 							simEng.getListEvents()
 									.add(new Event(getOutputTransitions().get(placesOut[i]).get(j), nextFireTime));
 							if (simEng.enabledVerbose())
-								log.info("Adding T{} with time: {}", getOutputTransitions().get(placesOut[i]).get(j), nextFireTime);
+								log.info("Adding {}{} with time: {}", DEFAULT_TRANSITION_NAME_PREFIX, getOutputTransitions().get(placesOut[i]).get(j), nextFireTime);
 						} else {
 							fireTransition(getOutputTransitions().get(placesOut[i]).get(j), simEng);
 						}
@@ -203,19 +195,19 @@ public class PetriNet {
 	}
 
 	private void textToPlace(String line, int place) {
-		if(line.split(";").length == 1)
+		if(line.split(FIELD_DELIMITER).length == 1)
 			places.put(place, new Place(place, Integer.valueOf(line).intValue()));
-		else if(line.split(";").length == 2)
-			places.put(place, new Place(place, Integer.valueOf(line.split(";")[0]).intValue(), line.split(";")[1]));
+		else if(line.split(FIELD_DELIMITER).length == 2)
+			places.put(place, new Place(place, Integer.valueOf(line.split(FIELD_DELIMITER)[0]).intValue(), line.split(FIELD_DELIMITER)[1]));
 	}
 
 	private void textToTransition(String line, int transition) {
-		String[] splitLine = line.split(";");
+		String[] splitLine = line.split(FIELD_DELIMITER);
 
-		String[] pIn = splitLine[0].split(",");
-		String[] pOut = splitLine[1].split(",");
-		String[] wIn = splitLine[2].split(",");
-		String[] wOut = splitLine[3].split(",");
+		String[] pIn = splitLine[0].split(ARRAY_DELIMITER);
+		String[] pOut = splitLine[1].split(ARRAY_DELIMITER);
+		String[] wIn = splitLine[2].split(ARRAY_DELIMITER);
+		String[] wOut = splitLine[3].split(ARRAY_DELIMITER);
 
 		int[] placeIn = new int[pIn.length];
 		int[] placeOut = new int[pOut.length];
@@ -251,7 +243,7 @@ public class PetriNet {
 		String state = "";
 
 		for (int i = 1; i < places.size(); i++)
-			state += places.get(i).getTokens() + ",";
+			state += places.get(i).getTokens() + CSV_DELIMITER;
 		state += places.get(places.size()).getTokens();
 
 		return state;

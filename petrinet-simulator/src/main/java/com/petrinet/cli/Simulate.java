@@ -1,5 +1,9 @@
 package com.petrinet.cli;
 
+import static com.petrinet.io.OutputFormat.*;
+import static com.petrinet.cli.CommandLineConstants.*;
+import com.petrinet.engine.SimulationControl;
+
 import com.petrinet.engine.SimulationEngine;
 import com.petrinet.io.PetriNetException;
 
@@ -11,19 +15,18 @@ public class Simulate {
 	public static void main(String[] args) throws PetriNetException {
 
 		if(args.length < 2) {
-			throw new PetriNetException("Syntax: java petrinet.Simulate inputFileName outputFileName [simulationRuns] [-verbose]");
+			throw new PetriNetException(USAGE_MESSAGE);
 		}
 		
-		int simulationRuns = 1;
-		if(args.length > 2 && args[2].matches("\\d+"))
-			simulationRuns = Integer.valueOf(args[2]).intValue();
+		if(args.length > 2 && args[2].matches(NUMERIC_PATTERN))
+			SimulationControl.setSimulationRuns(Integer.valueOf(args[2]).intValue());	
 		
 		boolean verbose = false;
-		if(args.length > 3 && args[3].equals("-verbose"))
+		if(args.length > 3 && args[3].equals(VERBOSE_FLAG))
 			verbose = true;
 		
-		for(int i = 1; i <= simulationRuns; i++) {
-			SimulationEngine simulation = new SimulationEngine(args[0], args[1].split("\\.")[0] + "_" + i + ".csv", verbose);
+		for(int i = 1; i <= SimulationControl.SIMULATION_RUNS; i++) {
+			SimulationEngine simulation = new SimulationEngine(args[0], args[1].split(FILE_EXTENSION_PATTERN)[0] + OUTPUT_FILE_SEPARATOR + i + OUTPUT_FILE_EXTENSION, verbose);
 			simulation.run();
 			
 			if(verbose) 
@@ -33,7 +36,7 @@ public class Simulate {
 				log.info("============");
 		}
 		
-		log.info("Outputs written in {}_[simulationRun].csv", args[1].split("\\.")[0]);		
+		log.info("Outputs written in {}{}[simulationRun]{}", args[1].split(FILE_EXTENSION_PATTERN)[0], OUTPUT_FILE_SEPARATOR, OUTPUT_FILE_EXTENSION);		
 	}
 	
 }

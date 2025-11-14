@@ -5,6 +5,7 @@ import com.petrinet.model.PetriNet;
 import lombok.extern.slf4j.Slf4j;
 
 import com.petrinet.io.*;
+import static com.petrinet.io.PetriNetFileFormat.*;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -22,6 +23,7 @@ public class SimulationEngine {
 
 	private PetriNet pn;
 
+	private final String outputFile;
 	private Output outputWriter;
 
 	private boolean verbose;
@@ -42,62 +44,61 @@ public class SimulationEngine {
 
 		this.verbose = verbose;
 
-		openOutputFiles(outputFile);
+		this.outputFile = outputFile;
 	}
 
-	public void run() {
+	public void run() throws PetriNetException {
 
-		while (!terminateSimulation()) {
+		try(Output outputWriter = openOutputFiles(outputFile)) {
+			this.outputWriter = outputWriter;
 
-			if (!listEvents.isEmpty()) {
-				Collections.sort(listEvents);
-				Event firingEvent = listEvents.remove(0);
-				// listEvents.remove(0);
+			while (!terminateSimulation()) {
 
-				time = firingEvent.getTime();
-				pn.fireTransition(firingEvent.getTransition(), this);
-			} else {
-				// This block only applies at the beginning of the simulation
-				// or a potential deadlock state has been reached
-				// (i.e. no live transitions and no events scheduled)
-				boolean deadlock = true;
-				int i = 1;
-				do {
-					if (pn.enabledTransition(pn.getTransitions().get(i).getId())) {
-						// This first case only applies for Arrival/Source transitions
-						if (pn.getTransitions().get(i).isTimed()
-								&& !scheduledTransition(pn.getTransitions().get(i).getId()))
-							listEvents.add(new Event(pn.getTransitions().get(i).getId(),
-									time + pn.getTransitions().get(i).call()));
-						else if (!pn.getTransitions().get(i).isTimed())
-							pn.fireTransition(pn.getTransitions().get(i).getId(), this);
-						else
+				if (!listEvents.isEmpty()) {
+					Collections.sort(listEvents);
+					Event firingEvent = listEvents.remove(0);
+				
+					time = firingEvent.getTime();
+					pn.fireTransition(firingEvent.getTransition(), this);
+				} else {
+					// This block only applies at the beginning of the simulation
+					// or a potential deadlock state has been reached
+					// (i.e. no live transitions and no events scheduled)
+					boolean deadlock = true;
+					int i = 1;
+					do {
+						if (pn.enabledTransition(pn.getTransitions().get(i).getId())) {
+							// This first case only applies for Arrival/Source transitions
+							if (pn.getTransitions().get(i).isTimed()
+									&& !scheduledTransition(pn.getTransitions().get(i).getId()))
+								listEvents.add(new Event(pn.getTransitions().get(i).getId(),
+										time + pn.getTransitions().get(i).call()));
+							else if (!pn.getTransitions().get(i).isTimed())
+								pn.fireTransition(pn.getTransitions().get(i).getId(), this);
+							else
+								i++;
+							deadlock = false;
+						} else {
 							i++;
-						deadlock = false;
-					} else {
-						i++;
+						}
+					} while (i <= pn.getTransitions().size());
+
+					if (deadlock) {
+						log.warn("Simulation reached a deadlock state.");
+						break;
 					}
-				} while (i <= pn.getTransitions().size());
-
-				if (deadlock) {
-					log.warn("Simulation reached a deadlock state.");
-					break;
 				}
+
 			}
-
 		}
-
-		closeOutputFiles();
 	}
 
-	private void openOutputFiles(String outputFile) {
-		outputWriter = new Output(outputFile);
-		outputWriter.writeHeaders(pn);
-		outputWriter.writeInitialState(getSimulationTime(), pn);
-	}
+	private Output openOutputFiles(String outputFile) throws PetriNetException {
+		Output output = new Output(outputFile);
+		output.writeHeaders(pn);
+		output.writeInitialState(getSimulationTime(), pn);
 
-	private void closeOutputFiles() {
-		outputWriter.closeOutput();
+		return output;
 	}
 
 	public double getSimulationTime() {
@@ -124,35 +125,33 @@ public class SimulationEngine {
 	}
 
 	private void readTerminationCriteria(String petrinetFile) throws PetriNetException {
-		try {
-			FileReader fr = new FileReader(petrinetFile);
-			BufferedReader br = new BufferedReader(fr);
-
+		try (BufferedReader br = new BufferedReader(new FileReader(petrinetFile))) {
+			
 			String line;
 			do {
 				line = br.readLine();
-			} while (!line.equals("@TerminationTime") && !line.equals("@TerminationMarking"));
+			} while (!line.equals(SECTION_TERMINATION_TIME) && !line.equals(SECTION_TERMINATION_MARKING));
 
 			do {
-				if (line.equals("@TerminationTime")) {
+				if (line.equals(SECTION_TERMINATION_TIME)) {
 					terminateByTime = true;
 
 					do {
 						line = br.readLine();
-						if (!line.substring(0, 1).equals("#"))
+						if (!line.substring(0, 1).equals(COMMENT_PREFIX))
 							terminationTime = Double.valueOf(line.trim()).doubleValue();
-					} while (line.substring(0, 1).equals("#"));
+					} while (line.substring(0, 1).equals(COMMENT_PREFIX));
 
-				} else if (line.equals("@TerminationMarking")) {
+				} else if (line.equals(SECTION_TERMINATION_MARKING)) {
 					terminateByMarking = true;
 					terminationMarking = new ArrayList<int[]>();
 
 					line = br.readLine();
 					do {
-						if (!line.substring(0, 1).equals("#")) {
+						if (!line.substring(0, 1).equals(COMMENT_PREFIX)) {
 							int[] placeFinalMarking = new int[2];
-							placeFinalMarking[0] = Integer.valueOf(line.split(";")[0].trim()).intValue();
-							placeFinalMarking[1] = Integer.valueOf(line.split(";")[1].trim()).intValue();
+							placeFinalMarking[0] = Integer.valueOf(line.split(FIELD_DELIMITER)[0].trim()).intValue();
+							placeFinalMarking[1] = Integer.valueOf(line.split(FIELD_DELIMITER)[1].trim()).intValue();
 							terminationMarking.add(placeFinalMarking);
 						}
 						line = br.readLine();
@@ -161,9 +160,6 @@ public class SimulationEngine {
 				}
 				line = br.readLine();
 			} while (line != null);
-
-			br.close();
-			fr.close();
 
 		} catch (FileNotFoundException fnf) {
 			throw new PetriNetFileNotFoundException("Petri Net file not found.");

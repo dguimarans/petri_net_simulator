@@ -1,5 +1,7 @@
 package com.petrinet.model;
 
+import static com.petrinet.model.ModelDefaultStrings.DEFAULT_PLACE_NAME_PREFIX;
+
 public class Place {
 	private static int nPlaces = 1;
 	private int id;
@@ -13,13 +15,13 @@ public class Place {
 	public Place(int tokens){
 		this.id = nPlaces++;
 		this.tokens = tokens;
-		this.name = "P" + id;
+		this.name = DEFAULT_PLACE_NAME_PREFIX + id;
 	}
 	
 	public Place(int id, int tokens) {
 		this.id = id;
 		this.tokens = tokens;
-		this.name = "P" + id;
+		this.name = DEFAULT_PLACE_NAME_PREFIX + id;
 	}
 	
 	public Place(int id, int tokens, String name) {
