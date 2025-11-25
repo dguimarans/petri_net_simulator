@@ -153,7 +153,7 @@ public class PetriNet {
 	}
 
 	public void fireTransition(int transition, SimulationEngine simEng) {
-		if (simEng.enabledVerbose())
+		if (simEng.isVerbose())
 			log.info("{}{} @ {}", DEFAULT_TRANSITION_NAME_PREFIX, transition, simEng.getSimulationTime());
 
 		for (int i = 0; i < transitions.get(transition).getPlacesIn().length; i++)
@@ -173,19 +173,19 @@ public class PetriNet {
 		int[] placesOut = transitions.get(transition).getPlacesOut();
 
 		for (int i = 0; i < placesOut.length; i++) {
-			if (simEng.enabledVerbose())
+			if (simEng.isVerbose())
 				log.info("{} -> {}", placesOut[i], getOutputTransitions().get(placesOut[i]));
 			if (getOutputTransitions().containsKey(placesOut[i]))
 				for (int j = 0; j < getOutputTransitions().get(placesOut[i]).size(); j++)
 					if (enabledTransition(getOutputTransitions().get(placesOut[i]).get(j))) {
-						if (simEng.enabledVerbose())
+						if (simEng.isVerbose())
 							log.info("Enabled transition: {}{}", DEFAULT_TRANSITION_NAME_PREFIX, getOutputTransitions().get(placesOut[i]).get(j));
 						if (transitions.get(getOutputTransitions().get(placesOut[i]).get(j)).isTimed()) {
 							double nextFireTime = simEng.getSimulationTime()
 									+ transitions.get(getOutputTransitions().get(placesOut[i]).get(j)).call();
 							simEng.getListEvents()
 									.add(new Event(getOutputTransitions().get(placesOut[i]).get(j), nextFireTime));
-							if (simEng.enabledVerbose())
+							if (simEng.isVerbose())
 								log.info("Adding {}{} with time: {}", DEFAULT_TRANSITION_NAME_PREFIX, getOutputTransitions().get(placesOut[i]).get(j), nextFireTime);
 						} else {
 							fireTransition(getOutputTransitions().get(placesOut[i]).get(j), simEng);

@@ -26,23 +26,22 @@ public class SimulationEngine {
 	private final String outputFile;
 	private Output outputWriter;
 
-	private boolean verbose;
+	private SimulationControl simulationControl;
 
 	private boolean terminateByTime;
 	private boolean terminateByMarking;
 	private double terminationTime;
 	private ArrayList<int[]> terminationMarking;
 
-	public SimulationEngine(String petrinetFile, String outputFile, boolean verbose) throws PetriNetException {
+	public SimulationEngine(String petrinetFile, String outputFile, SimulationControl simulationControl) throws PetriNetException {
 		this.time = 0.0;
 		this.pn = new PetriNet(petrinetFile);
-		this.listEvents = new LinkedList<Event>();
+		this.listEvents = new LinkedList<>();
+		this.simulationControl = simulationControl;
 
 		this.terminateByTime = false;
 		this.terminateByMarking = false;
 		readTerminationCriteria(petrinetFile);
-
-		this.verbose = verbose;
 
 		this.outputFile = outputFile;
 	}
@@ -109,6 +108,10 @@ public class SimulationEngine {
 		return this.listEvents;
 	}
 
+	public boolean isVerbose() {
+		return simulationControl.isVerbose();
+	}
+
 	public Output getOutputFile() {
 		return this.outputWriter;
 	}
@@ -118,10 +121,6 @@ public class SimulationEngine {
 			if (listEvents.get(i).getTransition() == transition)
 				return true;
 		return false;
-	}
-
-	public boolean enabledVerbose() {
-		return this.verbose;
 	}
 
 	private void readTerminationCriteria(String petrinetFile) throws PetriNetException {
@@ -134,28 +133,26 @@ public class SimulationEngine {
 
 			do {
 				if (line.equals(SECTION_TERMINATION_TIME)) {
-					terminateByTime = true;
+					simulationControl.setTerminationByTime(true);
 
-					do {
+					do { 
 						line = br.readLine();
-						if (!line.substring(0, 1).equals(COMMENT_PREFIX))
-							terminationTime = Double.valueOf(line.trim()).doubleValue();
-					} while (line.substring(0, 1).equals(COMMENT_PREFIX));
+					} while (line.startsWith(COMMENT_PREFIX));
+					simulationControl.setTerminationTime(Double.parseDouble(line.trim()));
 
 				} else if (line.equals(SECTION_TERMINATION_MARKING)) {
-					terminateByMarking = true;
-					terminationMarking = new ArrayList<int[]>();
-
+					simulationControl.setTerminateByMarking(true);
+					
 					line = br.readLine();
+
 					do {
-						if (!line.substring(0, 1).equals(COMMENT_PREFIX)) {
-							int[] placeFinalMarking = new int[2];
-							placeFinalMarking[0] = Integer.valueOf(line.split(FIELD_DELIMITER)[0].trim()).intValue();
-							placeFinalMarking[1] = Integer.valueOf(line.split(FIELD_DELIMITER)[1].trim()).intValue();
-							terminationMarking.add(placeFinalMarking);
+						if (!line.startsWith(COMMENT_PREFIX)) {
+							String[] placeGoalState = line.split(FIELD_DELIMITER);
+							simulationControl.addTerminationMarking(
+								Integer.parseInt(placeGoalState[0].trim()), 
+								Integer.parseInt(placeGoalState[1].trim()));
 						}
 						line = br.readLine();
-
 					} while (line != null && line.length() > 0);
 				}
 				line = br.readLine();
@@ -172,16 +169,17 @@ public class SimulationEngine {
 	}
 
 	private boolean terminateSimulation() {
-		return (terminateByTime && time >= terminationTime) || (terminateByMarking && checkFinalMarking());
+		return (simulationControl.shouldTerminateByTime() && time >= simulationControl.getTerminationTime()) 
+			|| (simulationControl.shouldTerminateByMarking() && checkFinalMarking());
 	}
 
 	private boolean checkFinalMarking() {
-		int finalPlaceMarking = 0;
-		for (int i = 0; i < terminationMarking.size(); i++) {
-			if (pn.getPlaces().get(terminationMarking.get(i)[0]).getTokens() >= terminationMarking.get(i)[1])
-				finalPlaceMarking++;
+		for (int[] placeGoalState : simulationControl.getTerminationMarking()) {
+			if (pn.getPlaces().get(placeGoalState[0]).getTokens() < placeGoalState[1]){
+				return false;
+			}
 		}
 
-		return finalPlaceMarking == terminationMarking.size();
+		return true;
 	}
 }

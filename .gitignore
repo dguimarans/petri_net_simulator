@@ -37,3 +37,6 @@ nbdist/
 # OS files
 .DS_Store
 Thumbs.db
+
+# AI helpers
+.claude
