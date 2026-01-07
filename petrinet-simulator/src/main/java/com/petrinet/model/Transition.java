@@ -3,7 +3,7 @@ package com.petrinet.model;
 import com.petrinet.distributions.Distributions;
 
 public class Transition {
-	private static int nTransitions = 1;
+	// private static int nTransitions = 1;
 	private int id;
 	private int[] placesIn;
 	private int[] placesOut;
@@ -19,21 +19,6 @@ public class Transition {
 	
 	private int firings;
 	
-	public Transition(){
-		this.id = nTransitions++;
-		this.firings = 0;
-		this.timed = false;
-	}
-	
-	public Transition(int[] placesIn, int[] placesOut, int[] weightsIn, int[] weightsOut){
-		this.id = nTransitions++;
-		this.placesIn = placesIn;
-		this.placesOut = placesOut;
-		this.weightsIn = weightsIn;
-		this.weightsOut = weightsOut;
-		this.timed = false;
-		this.firings = 0;
-	}
 	
 	public Transition(int id, int[] placesIn, int[] placesOut, int[] weightsIn, int[] weightsOut){
 		this.id = id;
@@ -43,18 +28,6 @@ public class Transition {
 		this.weightsOut = weightsOut;
 		this.timed = false;
 		this.firings = 0;
-	}
-	
-	public Transition(int[] placesIn, int[] placesOut, int[] weightsIn, int[] weightsOut, String distribution){
-		this.id = nTransitions++;
-		this.placesIn = placesIn;
-		this.placesOut = placesOut;
-		this.weightsIn = weightsIn;
-		this.weightsOut = weightsOut;
-		this.firings = 0;
-		
-		this.timed = true;
-		setDistribution(distribution);	
 	}
 	
 	public Transition(int id, int[] placesIn, int[] placesOut, int[] weightsIn, int[] weightsOut, String distribution){

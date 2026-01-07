@@ -28,20 +28,11 @@ public class SimulationEngine {
 
 	private SimulationControl simulationControl;
 
-	private boolean terminateByTime;
-	private boolean terminateByMarking;
-	private double terminationTime;
-	private ArrayList<int[]> terminationMarking;
-
-	public SimulationEngine(String petrinetFile, String outputFile, SimulationControl simulationControl) throws PetriNetException {
+	public SimulationEngine(PetriNet petriNet, String outputFile, SimulationControl simulationControl) throws PetriNetException {
 		this.time = 0.0;
-		this.pn = new PetriNet(petrinetFile);
+		this.pn = petriNet;
 		this.listEvents = new LinkedList<>();
 		this.simulationControl = simulationControl;
-
-		this.terminateByTime = false;
-		this.terminateByMarking = false;
-		readTerminationCriteria(petrinetFile);
 
 		this.outputFile = outputFile;
 	}
@@ -121,51 +112,6 @@ public class SimulationEngine {
 			if (listEvents.get(i).getTransition() == transition)
 				return true;
 		return false;
-	}
-
-	private void readTerminationCriteria(String petrinetFile) throws PetriNetException {
-		try (BufferedReader br = new BufferedReader(new FileReader(petrinetFile))) {
-			
-			String line;
-			do {
-				line = br.readLine();
-			} while (!line.equals(SECTION_TERMINATION_TIME) && !line.equals(SECTION_TERMINATION_MARKING));
-
-			do {
-				if (line.equals(SECTION_TERMINATION_TIME)) {
-					simulationControl.setTerminationByTime(true);
-
-					do { 
-						line = br.readLine();
-					} while (line.startsWith(COMMENT_PREFIX));
-					simulationControl.setTerminationTime(Double.parseDouble(line.trim()));
-
-				} else if (line.equals(SECTION_TERMINATION_MARKING)) {
-					simulationControl.setTerminateByMarking(true);
-					
-					line = br.readLine();
-
-					do {
-						if (!line.startsWith(COMMENT_PREFIX)) {
-							String[] placeGoalState = line.split(FIELD_DELIMITER);
-							simulationControl.addTerminationMarking(
-								Integer.parseInt(placeGoalState[0].trim()), 
-								Integer.parseInt(placeGoalState[1].trim()));
-						}
-						line = br.readLine();
-					} while (line != null && line.length() > 0);
-				}
-				line = br.readLine();
-			} while (line != null);
-
-		} catch (FileNotFoundException fnf) {
-			throw new PetriNetFileNotFoundException("Petri Net file not found.");
-		} catch (IOException ioe) {
-			throw new PetriNetParseException("Simulation Engine: Can't read the specified file.");
-		} catch (NullPointerException npe) {
-			throw new PetriNetSimulationException(
-					"Simulation Engine: Unbounded simulation detected. No termination criteria specified or bad format.");
-		}
 	}
 
 	private boolean terminateSimulation() {
