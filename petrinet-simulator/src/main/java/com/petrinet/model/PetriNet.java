@@ -21,7 +21,7 @@ public class PetriNet {
 	public PetriNet(int nPlaces, int nTransitions) {
 		this.places = new HashMap<Integer, Place>(nPlaces);
 		this.transitions = new HashMap<Integer, Transition>(nTransitions);
-		
+
 		this.outputTransitions = new HashMap<Integer, ArrayList<Integer>>();
 	}
 
@@ -31,8 +31,8 @@ public class PetriNet {
 
 	public void addTransition(Transition transition) {
 		this.transitions.put(transition.getId(), transition);
-		
-		//	Populate lists of transitions enabled by each place
+
+		// Populate lists of transitions enabled by each place
 		for (int i = 0; i < transition.getPlacesIn().length; i++) {
 			if (outputTransitions.containsKey(transition.getPlacesIn()[i]))
 				outputTransitions.get(transition.getPlacesIn()[i]).add(transition.getId());
@@ -72,10 +72,10 @@ public class PetriNet {
 	public boolean enabledTransition(int transition) {
 		int[] placesIn = transitions.get(transition).getPlacesIn();
 		int[] weightsIn = transitions.get(transition).getWeightsIn();
-		
+
 		// Inhibitors will have an arc weight of 0
 		for (int i = 0; i < placesIn.length; i++)
-			if ((weightsIn[i] != 0 && places.get(placesIn[i]).getTokens() < weightsIn[i]) || 
+			if ((weightsIn[i] != 0 && places.get(placesIn[i]).getTokens() < weightsIn[i]) ||
 					(weightsIn[i] == 0 && places.get(placesIn[i]).getTokens() > 0))
 				return false;
 
@@ -97,7 +97,8 @@ public class PetriNet {
 							+ transitions.get(transition).getWeightsOut()[i]);
 
 		simEng.getOutputFile()
-				.writeOutput(DEFAULT_TRANSITION_NAME_PREFIX + transition + CSV_DELIMITER + simEng.getSimulationTime() + CSV_DELIMITER + stateToString() + CSV_NEWLINE);
+				.writeOutput(DEFAULT_TRANSITION_NAME_PREFIX + transition + CSV_DELIMITER + simEng.getSimulationTime()
+						+ CSV_DELIMITER + stateToString() + CSV_NEWLINE);
 		transitions.get(transition).countFirings();
 
 		int[] placesOut = transitions.get(transition).getPlacesOut();
@@ -109,14 +110,16 @@ public class PetriNet {
 				for (int j = 0; j < getOutputTransitions().get(placesOut[i]).size(); j++)
 					if (enabledTransition(getOutputTransitions().get(placesOut[i]).get(j))) {
 						if (simEng.isVerbose())
-							log.info("Enabled transition: {}{}", DEFAULT_TRANSITION_NAME_PREFIX, getOutputTransitions().get(placesOut[i]).get(j));
+							log.info("Enabled transition: {}{}", DEFAULT_TRANSITION_NAME_PREFIX,
+									getOutputTransitions().get(placesOut[i]).get(j));
 						if (transitions.get(getOutputTransitions().get(placesOut[i]).get(j)).isTimed()) {
 							double nextFireTime = simEng.getSimulationTime()
 									+ transitions.get(getOutputTransitions().get(placesOut[i]).get(j)).call();
 							simEng.getListEvents()
 									.add(new Event(getOutputTransitions().get(placesOut[i]).get(j), nextFireTime));
 							if (simEng.isVerbose())
-								log.info("Adding {}{} with time: {}", DEFAULT_TRANSITION_NAME_PREFIX, getOutputTransitions().get(placesOut[i]).get(j), nextFireTime);
+								log.info("Adding {}{} with time: {}", DEFAULT_TRANSITION_NAME_PREFIX,
+										getOutputTransitions().get(placesOut[i]).get(j), nextFireTime);
 						} else {
 							fireTransition(getOutputTransitions().get(placesOut[i]).get(j), simEng);
 						}
