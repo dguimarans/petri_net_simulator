@@ -17,6 +17,9 @@ public final class OutputFormat {
     public static final String CSV_NEWLINE = "\n";
     public static final String CSV_HEADER_TRANSITION = "Transition";
     public static final String CSV_HEADER_TIME = "Time";
+    public static final String CSV_HEADER_PLACE = "Place";
+    public static final String CSV_HEADER_PLACE_NAME = "PlaceName";
+    public static final String CSV_HEADER_TOKENS = "Tokens";
 
     private OutputFormat() {
         throw new AssertionError("Cannot instantiate output format constants class");

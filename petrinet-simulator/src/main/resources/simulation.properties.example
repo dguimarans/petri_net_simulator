@@ -1,0 +1,23 @@
+# Petri Net Simulator Configuration
+# ----------------------------------
+# Copy this file to simulation.properties and modify as needed.
+
+# Input/Output files
+input.file=example_model.pn
+output.file=output.csv
+
+# Output mode: compact | full-state | both
+# - compact: one line per place change (recommended for large models)
+# - full-state: full system state per transition (legacy format)
+# - both: write two output files (compact + full-state)
+output.mode=compact
+
+# Suffix added to output filename for full-state file when mode=both
+# Example: output.csv -> output_full.csv
+output.full-state.suffix=_full
+
+# Number of simulation runs
+simulation.runs=1
+
+# Verbose logging (true/false)
+simulation.verbose=false

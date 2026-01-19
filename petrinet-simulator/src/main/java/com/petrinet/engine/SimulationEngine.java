@@ -1,17 +1,12 @@
 package com.petrinet.engine;
 
+import com.petrinet.config.SimulationConfig;
 import com.petrinet.model.PetriNet;
 
 import lombok.extern.slf4j.Slf4j;
 
 import com.petrinet.io.*;
-import static com.petrinet.io.PetriNetFileFormat.*;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 
@@ -24,30 +19,44 @@ public class SimulationEngine {
 	private PetriNet pn;
 
 	private final String outputFile;
-	private Output outputWriter;
+	private Output compactOutputWriter;
+	private Output fullStateOutputWriter;
 
 	private SimulationControl simulationControl;
+	private SimulationConfig simulationConfig;
 
+	/**
+	 * Legacy constructor for backwards compatibility.
+	 * Uses full-state output mode by default.
+	 */
 	public SimulationEngine(PetriNet petriNet, String outputFile, SimulationControl simulationControl) throws PetriNetException {
+		this(petriNet, outputFile, simulationControl, null);
+	}
+
+	/**
+	 * New constructor with configuration support.
+	 */
+	public SimulationEngine(PetriNet petriNet, String outputFile, SimulationControl simulationControl, SimulationConfig config) throws PetriNetException {
 		this.time = 0.0;
 		this.pn = petriNet;
 		this.listEvents = new LinkedList<>();
 		this.simulationControl = simulationControl;
+		this.simulationConfig = config;
 
 		this.outputFile = outputFile;
 	}
 
 	public void run() throws PetriNetException {
 
-		try(Output outputWriter = openOutputFiles(outputFile)) {
-			this.outputWriter = outputWriter;
+		try {
+			openOutputFiles();
 
 			while (!terminateSimulation()) {
 
 				if (!listEvents.isEmpty()) {
 					Collections.sort(listEvents);
 					Event firingEvent = listEvents.remove(0);
-				
+
 					time = firingEvent.getTime();
 					pn.fireTransition(firingEvent.getTransition(), this);
 				} else {
@@ -80,15 +89,40 @@ public class SimulationEngine {
 				}
 
 			}
+		} finally {
+			closeOutputFiles();
 		}
 	}
 
-	private Output openOutputFiles(String outputFile) throws PetriNetException {
-		Output output = new Output(outputFile);
-		output.writeHeaders(pn);
-		output.writeInitialState(getSimulationTime(), pn);
+	private void openOutputFiles() throws PetriNetException {
+		if (shouldWriteCompact()) {
+			compactOutputWriter = new Output(outputFile);
+			compactOutputWriter.writeCompactHeaders();
+		}
 
-		return output;
+		if (shouldWriteFullState()) {
+			String fullStateFile = (simulationConfig != null)
+				? simulationConfig.getFullStateOutputFile(outputFile)
+				: outputFile;
+
+			// If only full-state mode, use the base output file name
+			if (!shouldWriteCompact()) {
+				fullStateFile = outputFile;
+			}
+
+			fullStateOutputWriter = new Output(fullStateFile);
+			fullStateOutputWriter.writeHeaders(pn);
+			fullStateOutputWriter.writeInitialState(getSimulationTime(), pn);
+		}
+	}
+
+	private void closeOutputFiles() throws PetriNetException {
+		if (compactOutputWriter != null) {
+			compactOutputWriter.close();
+		}
+		if (fullStateOutputWriter != null) {
+			fullStateOutputWriter.close();
+		}
 	}
 
 	public double getSimulationTime() {
@@ -103,8 +137,32 @@ public class SimulationEngine {
 		return simulationControl.isVerbose();
 	}
 
-	public Output getOutputFile() {
-		return this.outputWriter;
+	public boolean shouldWriteCompact() {
+		return simulationConfig != null && simulationConfig.shouldWriteCompact();
+	}
+
+	public boolean shouldWriteFullState() {
+		// Default to full-state for legacy/null config
+		return simulationConfig == null || simulationConfig.shouldWriteFullState();
+	}
+
+	/**
+	 * Writes a single place change to the compact output file.
+	 * Format: transition;time;placeId;placeName;newTokens
+	 */
+	public void writeCompactChange(int transition, int placeId, String placeName, int newTokens) {
+		if (compactOutputWriter != null) {
+			compactOutputWriter.writeCompactLine(transition, time, placeId, placeName, newTokens);
+		}
+	}
+
+	/**
+	 * Writes the full system state to the full-state output file.
+	 */
+	public void writeFullState(int transition, String stateString) {
+		if (fullStateOutputWriter != null) {
+			fullStateOutputWriter.writeFullStateLine(transition, time, stateString);
+		}
 	}
 
 	private boolean scheduledTransition(int transition) {
@@ -115,7 +173,7 @@ public class SimulationEngine {
 	}
 
 	private boolean terminateSimulation() {
-		return (simulationControl.shouldTerminateByTime() && time >= simulationControl.getTerminationTime()) 
+		return (simulationControl.shouldTerminateByTime() && time >= simulationControl.getTerminationTime())
 			|| (simulationControl.shouldTerminateByMarking() && checkFinalMarking());
 	}
 

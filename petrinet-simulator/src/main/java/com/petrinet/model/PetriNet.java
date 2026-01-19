@@ -6,7 +6,6 @@ import java.util.HashMap;
 import com.petrinet.engine.*;
 
 import static com.petrinet.io.OutputFormat.CSV_DELIMITER;
-import static com.petrinet.io.OutputFormat.CSV_NEWLINE;
 import static com.petrinet.model.ModelDefaultStrings.*;
 
 import lombok.extern.slf4j.Slf4j;
@@ -86,23 +85,42 @@ public class PetriNet {
 		if (simEng.isVerbose())
 			log.info("{}{} @ {}", DEFAULT_TRANSITION_NAME_PREFIX, transition, simEng.getSimulationTime());
 
-		for (int i = 0; i < transitions.get(transition).getPlacesIn().length; i++)
-			places.get(transitions.get(transition).getPlacesIn()[i])
-					.setTokens(places.get(transitions.get(transition).getPlacesIn()[i]).getTokens()
-							- transitions.get(transition).getWeightsIn()[i]);
+		Transition t = transitions.get(transition);
+		int[] placesIn = t.getPlacesIn();
+		int[] weightsIn = t.getWeightsIn();
+		int[] placesOut = t.getPlacesOut();
+		int[] weightsOut = t.getWeightsOut();
 
-		for (int i = 0; i < transitions.get(transition).getPlacesOut().length; i++)
-			places.get(transitions.get(transition).getPlacesOut()[i])
-					.setTokens(places.get(transitions.get(transition).getPlacesOut()[i]).getTokens()
-							+ transitions.get(transition).getWeightsOut()[i]);
+		// Update input places (consume tokens)
+		for (int i = 0; i < placesIn.length; i++) {
+			Place place = places.get(placesIn[i]);
+			int newTokens = place.getTokens() - weightsIn[i];
+			place.setTokens(newTokens);
 
-		simEng.getOutputFile()
-				.writeOutput(DEFAULT_TRANSITION_NAME_PREFIX + transition + CSV_DELIMITER + simEng.getSimulationTime()
-						+ CSV_DELIMITER + stateToString() + CSV_NEWLINE);
+			if (simEng.shouldWriteCompact()) {
+				simEng.writeCompactChange(transition, placesIn[i], place.getName(),newTokens);
+			}
+		}
+
+		// Update output places (produce tokens)
+		for (int i = 0; i < placesOut.length; i++) {
+			Place place = places.get(placesOut[i]);
+			int newTokens = place.getTokens() + weightsOut[i];
+			place.setTokens(newTokens);
+
+			if (simEng.shouldWriteCompact()) {
+				simEng.writeCompactChange(transition, placesOut[i], place.getName(), newTokens);
+			}
+		}
+
+		// Write full-state output if enabled
+		if (simEng.shouldWriteFullState()) {
+			simEng.writeFullState(transition, stateToString());
+		}
+
 		transitions.get(transition).countFirings();
 
-		int[] placesOut = transitions.get(transition).getPlacesOut();
-
+		// Schedule newly enabled transitions
 		for (int i = 0; i < placesOut.length; i++) {
 			if (simEng.isVerbose())
 				log.info("{} -> {}", placesOut[i], getOutputTransitions().get(placesOut[i]));
@@ -128,13 +146,14 @@ public class PetriNet {
 	}
 
 	public String stateToString() {
-		String state = "";
+		StringBuilder state = new StringBuilder(places.size() * 4);
 
-		for (int i = 1; i < places.size(); i++)
-			state += places.get(i).getTokens() + CSV_DELIMITER;
-		state += places.get(places.size()).getTokens();
+		for (int i = 1; i < places.size(); i++) {
+			state.append(places.get(i).getTokens()).append(CSV_DELIMITER);
+		}
+		state.append(places.get(places.size()).getTokens());
 
-		return state;
+		return state.toString();
 	}
 
 }
