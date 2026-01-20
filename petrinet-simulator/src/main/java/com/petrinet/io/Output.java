@@ -8,8 +8,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.petrinet.model.PetriNet;
+import com.petrinet.model.Place;
 
 import static com.petrinet.model.ModelDefaultStrings.INITIAL_STATE_MARKER;
+import static com.petrinet.model.ModelDefaultStrings.DEFAULT_PLACE_NAME_PREFIX;
 import static com.petrinet.model.ModelDefaultStrings.DEFAULT_TRANSITION_NAME_PREFIX;
 import static com.petrinet.io.OutputFormat.*;
 
@@ -22,12 +24,11 @@ public class Output implements AutoCloseable {
 			Path filePath = Paths.get(fileName);
 			Path directory = filePath.getParent();
 
-			if(directory != null && !Files.exists(directory)) {
+			if (directory != null && !Files.exists(directory)) {
 				Files.createDirectories(directory);
 			}
 
 			this.pw = new PrintWriter(new FileWriter(fileName));
-
 
 		} catch (IOException e) {
 			throw new PetriNetException("Error opening output file: " + fileName);
@@ -40,7 +41,7 @@ public class Output implements AutoCloseable {
 	 */
 	public void writeHeaders(PetriNet pn) {
 		pw.write(CSV_HEADER_TRANSITION + CSV_DELIMITER + CSV_HEADER_TIME + CSV_DELIMITER);
-		for(int i = 1; i < pn.getPlaces().size(); i++)
+		for (int i = 1; i < pn.getPlaces().size(); i++)
 			pw.write(pn.getPlaces().get(i).getName() + CSV_DELIMITER);
 		pw.write(pn.getPlaces().get(pn.getPlaces().size()).getName() + CSV_NEWLINE);
 	}
@@ -65,13 +66,23 @@ public class Output implements AutoCloseable {
 	}
 
 	/**
+	 * Writes the initial state for compact output format.
+	 */
+	public void writeInitialCompactState(double time, PetriNet pn) {
+		for (int i = 1; i <= pn.getPlaces().size(); i++) {
+			Place place = pn.getPlaces().get(i);
+			writeCompactLine(0, time, place.getId(), place.getName(), place.getTokens());
+		}
+	}
+
+	/**
 	 * Writes a single line in compact format.
 	 * Format: T{transition};{time};{placeId};{placeName};{tokens}
 	 */
 	public void writeCompactLine(int transition, double time, int placeId, String placeName, int tokens) {
 		pw.write(DEFAULT_TRANSITION_NAME_PREFIX + transition + CSV_DELIMITER +
 				time + CSV_DELIMITER +
-				placeId + CSV_DELIMITER +
+				DEFAULT_PLACE_NAME_PREFIX + placeId + CSV_DELIMITER +
 				placeName + CSV_DELIMITER +
 				tokens + CSV_NEWLINE);
 	}
@@ -88,7 +99,7 @@ public class Output implements AutoCloseable {
 
 	@Override
 	public void close() throws PetriNetException {
-		if(pw != null) {
+		if (pw != null) {
 			pw.close();
 		}
 	}

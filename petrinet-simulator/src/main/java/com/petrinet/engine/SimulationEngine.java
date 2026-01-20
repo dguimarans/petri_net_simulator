@@ -98,6 +98,7 @@ public class SimulationEngine {
 		if (shouldWriteCompact()) {
 			compactOutputWriter = new Output(outputFile);
 			compactOutputWriter.writeCompactHeaders();
+			compactOutputWriter.writeInitialCompactState(getSimulationTime(), pn);
 		}
 
 		if (shouldWriteFullState()) {
