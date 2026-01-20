@@ -11,7 +11,7 @@ public class SimulationControl {
     private ArrayList<int[]> terminationMarking;
 
     /**
-     * Verbose output flag (copied from ExecutionControl).
+     * Verbose output flag (copied from SimulationConfig).
      * Used by SimulationEngine to control detailed logging during simulation.
      */
     private boolean verbose = false;
@@ -55,7 +55,6 @@ public class SimulationControl {
         return terminationMarking;
     }
 
-    // Verbose (copied from ExecutionControl at initialization)
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
     }
